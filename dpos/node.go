@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// 网络节点
 var Nodes = make([]*Node, 10)
 
 // 全节点
@@ -14,6 +15,7 @@ type Node struct {
 	Votes int
 }
 
+// 代理产生新块
 func (node *Node) NewBlock(lastBlock *Block, data []byte) *Block {
 	b := &Block{
 		Index:     lastBlock.Index + 1,

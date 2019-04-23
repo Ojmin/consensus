@@ -31,6 +31,7 @@ type Block struct {
 	Delegate  *Node
 }
 
+// 产生创世区块
 func GenesisBlock() *Block {
 	b := &Block{
 		Index:     0,
@@ -44,6 +45,7 @@ func GenesisBlock() *Block {
 	return b
 }
 
+// 计算区块哈希
 func (b *Block) SetHash() {
 	hashcode := b.PrevHash + b.TimeStamp + hex.EncodeToString(b.Data) + strconv.Itoa(b.Index)
 	sha := sha256.New()
