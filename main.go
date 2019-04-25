@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func main() {
+func main_dpos() {
 	dpos.CreateNode()
 	for _, node := range dpos.Nodes {
 		fmt.Println(node.Name)
@@ -24,4 +24,8 @@ func main() {
 		fmt.Printf("[%s %d] produce new block\n", producers[i].Name, producers[i].Votes)
 		last = producers[i].NewBlock(last, []byte(fmt.Sprintf("new block %d", i)))
 	}
+}
+
+func main() {
+
 }
