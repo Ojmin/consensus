@@ -25,11 +25,11 @@ var (
 )
 
 // 生成区块
-func GenerateBlock(old Block, bpm int, addr string) Block {
+func GenerateBlock(prev Block, bpm int, addr string) Block {
 	b := Block{
-		Index:     old.Index + 1,
+		Index:     prev.Index + 1,
 		BPM:       bpm,
-		PrevHash:  old.Hash,
+		PrevHash:  prev.Hash,
 		Timestamp: time.Now().String(),
 		Validator: addr,
 	}
