@@ -69,14 +69,14 @@ func (n *NodeInfo) prepare(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	fmt.Println("接收到广播", r.Form["wartime"][0])
 	if len(r.Form["wartime"]) > 0 {
-
+		n.authentication(r)
 	}
 }
 
 //
 func (n *NodeInfo) preprepare(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	fmt.Println("接收到的广播", r.Form["wartime"][0])
+	fmt.Println("接收到广播", r.Form["wartime"][0])
 	if len(r.Form["wartime"]) > 0 {
 		n.broadcast(r.Form["wartime"][0], "/prepare")
 	}

@@ -30,28 +30,4 @@ func main() {
 		}
 		fmt.Println(nodes)
 	}
-	fmt.Println("------------------------------")
-	nodes = [4]Node{
-		{"a", 0},
-		{"b", 0},
-		{"c", 0},
-		{"d", 0},
-	}
-	test()
-}
-
-func test() {
-	nodes[0].Data = 1
-	for i := 0; i < len(nodes); i++ {
-		if i != 3 {
-			for j := 0; j < len(nodes); j++ {
-				if j == i {
-					continue
-				} else {
-					nodes[j].Data = nodes[j].Data + 1
-				}
-			}
-			fmt.Println(nodes)
-		}
-	}
 }
