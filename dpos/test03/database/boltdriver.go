@@ -1,4 +1,4 @@
-package db
+package database
 
 import (
 	"fmt"
@@ -11,10 +11,10 @@ const (
 	dbFile = "blockchain%s.db" // 数据库名
 
 	// 表名
-	BlocksBucket    = "blocks"
-	DelegatesBucket = "delegates"
-	TransferBucket  = "transfer"
-	LastHash        = "lasthash"
+	BlocksBucket       = "blocks"
+	DelegatesBucket    = "delegates"
+	TransactionsBucket = "transactions"
+	LastHash           = "lasthash"
 )
 
 // 初始化
@@ -40,7 +40,7 @@ func InitDB(nodeId string) (*bolt.DB, error) {
 	})
 	err = db.Update(func(tx *bolt.Tx) error {
 		if _, err := tx.CreateBucketIfNotExists([]byte(TransferBucket)); err != nil {
-			return fmt.Errorf("cannot create transfer bucket:%v", err)
+			return fmt.Errorf("cannot create transactions bucket:%v", err)
 		}
 		return nil
 	})
