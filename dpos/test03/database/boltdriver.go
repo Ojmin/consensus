@@ -14,7 +14,7 @@ const (
 	BlocksBucket       = "blocks"
 	DelegatesBucket    = "delegates"
 	TransactionsBucket = "transactions"
-	LastHash           = "lasthash"
+	TipHash            = "tiphash"
 )
 
 // 初始化
@@ -39,7 +39,7 @@ func InitDB(nodeId string) (*bolt.DB, error) {
 		return nil
 	})
 	err = db.Update(func(tx *bolt.Tx) error {
-		if _, err := tx.CreateBucketIfNotExists([]byte(TransferBucket)); err != nil {
+		if _, err := tx.CreateBucketIfNotExists([]byte(TransactionsBucket)); err != nil {
 			return fmt.Errorf("cannot create transactions bucket:%v", err)
 		}
 		return nil
