@@ -144,3 +144,11 @@ func CreateGenesisBlock(db *bolt.DB) *BlockChain {
 		Tip: curHash,
 	}
 }
+
+// 验证区块
+func ValidateBlock(last, cur *Block) bool {
+	if last.Hash != cur.Hash && last.Hash == cur.PrevHash {
+		return true
+	}
+	return false
+}
