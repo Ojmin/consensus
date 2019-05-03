@@ -31,14 +31,12 @@ func StartServer(chain *BlockChain) {
 	defer listener.Close()
 	//循环出块
 	go Forge(chain)
-
 	// 接收广播
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
 			log.Panic(err)
 		}
-
 		go handleConn(conn, chain)
 	}
 }
@@ -53,8 +51,34 @@ func handleConn(conn net.Conn, chain *BlockChain) {
 	case utils.Delegate:
 		handleDelegate(conn, chain)
 	case utils.Transfer:
+		handleTx(conn, chain)
 	default:
 		log.Println("连接错误")
+	}
+}
+
+// 处理交易
+func handleTx(conn net.Conn, chain *BlockChain) {
+	req, err := ioutil.ReadAll(conn)
+	if err != nil {
+		log.Panic(err)
+	}
+	data := utils.Serialize(req[Length:])
+	tx := DeserializeTx(data)
+	AddTx(chain.DB, tx)
+	SendTx(chain, tx)
+}
+
+// 发送交易
+func SendTx(chain *BlockChain, tx *Transaction) {
+	data := utils.Serialize(tx)
+	reqData := append(utils.ConvertStrToBytes(utils.Transfer), data...) // 拼接请求数据
+	delegates := GetAllDelegates(chain)
+	for _, d := range delegates {
+		if d.Address == NodeAddress {
+			continue
+		}
+		sendData(d.Address, reqData)
 	}
 }
 
@@ -71,7 +95,7 @@ func handleDelegate(conn net.Conn, chain *BlockChain) {
 	if ok { // 添加成功广播到其他节点
 		SendToDelegates(chain, delegate)
 	} else {
-
+		log.Panic("添加代理失败")
 	}
 }
 
@@ -173,5 +197,6 @@ func GenerateTx(chain *BlockChain) {
 		AddTx(chain.DB, tx)
 		log.Println("交易信息：", tx)
 		// 广播交易到其他节点
+		SendTx(chain, tx)
 	}
 }
