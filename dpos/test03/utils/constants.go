@@ -2,9 +2,9 @@ package utils
 
 // 网络传输常量
 const (
-	BlockChan    = "blocks"   //
-	DelegateChan = "delegate" //
-	TransferChan = "transfer" //
+	Block    = "blocks"   //
+	Delegate = "delegate" //
+	Transfer = "transfer" //
 
 	DelegateFlag     = "delegateflag" // 受托人标识
 	CoinNum          = 20             // 持币数

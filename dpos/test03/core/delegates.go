@@ -35,9 +35,9 @@ func SortByVotes(delegates []*Delegate) []*Delegate {
 }
 
 // 新增或更新候选人
-func AddDelegate(bc *BlockChain, delegate *Delegate, lastHeight int64) bool {
+func AddDelegate(chain *BlockChain, delegate *Delegate, lastHeight int64) bool {
 	var isAdded bool
-	if err := bc.DB.Update(func(tx *bolt.Tx) error {
+	if err := chain.DB.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(database.DelegatesBucket))
 		dData := bucket.Get([]byte(delegate.Address)) // 查询代理是否存在
 		if dData != nil {                             // 代理存在
@@ -117,7 +117,7 @@ func GetDeledate(bc *BlockChain, address []byte) *Delegate {
 	return &delegate
 }
 
-// 获取所有的受托人
+// 获取所有的候选人
 func GetAllDelegates(bc *BlockChain) []*Delegate {
 	delegates := make([]*Delegate, 0)
 	if err := bc.DB.View(func(tx *bolt.Tx) error {

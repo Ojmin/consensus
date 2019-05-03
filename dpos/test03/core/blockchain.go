@@ -70,6 +70,24 @@ func (bc *BlockChain) GetBlock(blockHash []byte) (*Block, error) {
 	return &block, nil
 }
 
+//
+func NewBlock(prevBlock *Block, txs []*Transaction, blockFlag bool) *Block {
+	if !blockFlag { // 没有出块权限
+		return nil
+	}
+	log.Println("开始出新块")
+	timestamp := time.Now().Unix()
+
+	block := &Block{
+		Index:     prevBlock.Index + 1,
+		Timestamp: timestamp,
+		PrevHash:  prevBlock.Hash,
+		Txs:       txs,
+	}
+	block.Hash = CalcHash(block)
+	return block
+}
+
 // 获取所有区块
 func GetAllBlocks(db *bolt.DB) []*Block {
 	blocks := make([]*Block, 0)
