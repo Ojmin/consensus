@@ -79,6 +79,9 @@ func handleDelegate(conn net.Conn, chain *BlockChain) {
 func SendToDelegates(chain *BlockChain, delegate *Delegate) {
 	delegates := GetAllDelegates(chain)
 	for _, d := range delegates {
+		if d.Address == delegate.Address {
+			continue
+		}
 		sendDelegate(d.Address, delegate)
 	}
 }
@@ -154,5 +157,21 @@ func sendData(address string, data []byte) {
 	}
 	if _, err := io.Copy(conn, bytes.NewBuffer(data)); err != nil {
 		log.Panic(err)
+	}
+}
+
+//
+func GenerateTx(chain *BlockChain) {
+	for i := 0; i < 50; i++ {
+		tx := &Transaction{
+			Id:         "id:" + utils.GetUuid(),
+			From:       "from:zhangsan",
+			To:         "to:lisi",
+			Amount:     float64(20.00),
+			TransferBy: "较易发生地址:" + NodeAddress,
+		}
+		AddTx(chain.DB, tx)
+		log.Println("交易信息：", tx)
+		// 广播交易到其他节点
 	}
 }
