@@ -21,30 +21,30 @@ var leader = Leader{0, -1}
 
 // 领导者
 type Leader struct {
-	Term int // 任期
-	Id   int // 编号
+	Term     int // 任期
+	LeaderId int // 编号
 }
 
 // Raft节点
 type Raft struct {
 	mu              sync.Mutex // 锁
-	id              int        // 节点编号
+	me              int        // 节点编号
 	curTerm         int        // 当前任期
 	voteFor         int        // 为哪个节点投票以
-	state           int        // 当前节点状态，0-follower，1-candidate，2-leader
+	state           int        // 当前节点状态
 	lastMsgTime     int64      // 发送最后一条消息时间
 	curLeader       int        // 当前节点的领导
 	timeout         int        // 超时时间
 	msgCh           chan bool  // 消息通道
 	electCh         chan bool  // 选举通道
 	heartBeatCh     chan bool  // 心跳通道
-	heartBeatRespCh chan bool  // 返回心跳信号
+	heartbeatRespCh chan bool  // 返回心跳信号
 }
 
 // 创建节点
 func MakeNode(id int) *Raft {
 	rf := &Raft{}
-	rf.id = id
+	rf.me = id
 	rf.voteFor = -1          // 不投
 	rf.state = stateFollower // follower状态
 	rf.curLeader = -1        // 没有领导
@@ -52,35 +52,29 @@ func MakeNode(id int) *Raft {
 	rf.msgCh = make(chan bool)
 	rf.electCh = make(chan bool)
 	rf.heartBeatCh = make(chan bool)
-	rf.heartBeatRespCh = make(chan bool)
+	rf.heartbeatRespCh = make(chan bool)
 	rand.Seed(time.Now().UnixNano())
 
-	go rf.election()
-	go rf.sendLeaderHeartBeat()
+	go rf.election()            // 选举
+	go rf.sendLeaderHeartBeat() // 心跳检查
 
 	return rf
 }
 
 // 选举
 func (rf *Raft) election() {
-	var result bool
-
-	// 循环投票
-	for {
+	var result bool // 标识是否选举成功（选出leader）
+	for {           // 循环投票
 		timeout := randRange(150, 500)
 		rf.lastMsgTime = milliSeconds() // 每个节点最后一条消息时间
 		select {
 		case <-time.After(time.Duration(timeout) * time.Millisecond):
 			fmt.Printf("当前节点状态为:%d\n", rf.state)
 		}
-
 		result = false
-
-		// 选出leader，停止循环，result设置为true
 		for !result {
-			result = rf.electOneRand()
+			result = rf.electOneRand(&leader) // 选举leader，若选出leader，返回true
 		}
-
 	}
 }
 
@@ -99,23 +93,63 @@ func (rf *Raft) electOneRand(leader *Leader) bool {
 	rf.becomeCandidate()
 	rf.mu.Unlock()
 
-	fmt.Println("开始选举领导者...")
-	// 选举
-	for {
-		// 遍历所有节点，进行投票
-		for i := 0; i < raftCount; i++ {
+	fmt.Println("开始选举Leader...")
 
+	for { // 选举
+		for i := 0; i < raftCount; i++ { // 遍历所有节点，进行投票
+			if i != rf.me { // 遍历到不是自己进行拉票
+				go func() {
+					if leader.LeaderId < 0 { // 其他节点没有领导
+						rf.electCh <- true
+					}
+				}()
+			}
 		}
+
+		for i := 0; i < raftCount; i++ {
+			select {
+			case ok := <-rf.electCh:
+				if ok {
+					votes++
+					success = votes > raftCount/2
+					if success && !triggerHeartBeat { // 票数过半且未触发心跳
+						triggerHeartBeat = true // 触发心跳
+						rf.mu.Lock()
+						rf.becomeLeader()
+						rf.mu.Unlock()
+						rf.heartbeatRespCh <- true // 向其他节点发送心跳信号
+						fmt.Printf("[%d]成为Leader\n", rf.me)
+						fmt.Printf("Leader发送心跳信号")
+					}
+				}
+			}
+		}
+
+		// 若不超时且票数过半且当前有领导
+		if timeout+last < milliSeconds() || votes >= raftCount/2 || rf.curLeader > -1 {
+			break
+		} else { // 没有选出leader
+			select {
+			case <-time.After(time.Duration(50 * time.Millisecond)):
+			}
+		}
+
 	}
 
 	return success
+}
+
+// 成为领导者
+func (rf *Raft) becomeLeader() {
+	rf.state = stateLeader
+	rf.curLeader = rf.me
 }
 
 // 修改节点为candidate状态
 func (rf *Raft) becomeCandidate() {
 	rf.state = stateCandidate  // 状态设置为候选人
 	rf.setTerm(rf.curTerm + 1) // 任期加一
-	rf.voteFor = rf.id         // 为哪个节点（自己）投票
+	rf.voteFor = rf.me         // 为哪个节点（自己）投票
 	rf.curLeader = -1          // 没有领导
 }
 
@@ -145,5 +179,7 @@ func main() {
 	for i := 0; i < raftCount; i++ {
 		MakeNode(i)
 	}
+	for {
 
+	}
 }
