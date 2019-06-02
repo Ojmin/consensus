@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
+	"net/http"
+	"net/rpc"
 	"sync"
 	"time"
 )
@@ -168,7 +171,21 @@ func (rf *Raft) sendAppendEntryImpl() {
 		for i := 0; i < raftCount; i++ { // 设置返回确认信号的子节点
 			if i != rf.me { // 当前不是本节点
 				go func() {
-					rf.heartbeatRespCh <- true // 子节点有返回
+					// rf.heartbeatRespCh <- true // 子节点有返回
+
+					prcClient, err := rpc.DialHTTP("tcp", ":9000")
+					if err != nil {
+						log.Fatal(err)
+					}
+					// 接收服务端发来的消息
+					var ok = false
+					err = prcClient.Call("Raft.Communication", Param{"hello"}, &ok)
+					if err != nil {
+						log.Println(err)
+					}
+					if ok {
+						rf.heartbeatCh <- true
+					}
 				}()
 			}
 		}
@@ -221,5 +238,29 @@ func main() {
 		nodes[i].Start()
 	}
 
+	// rpc
+	err := rpc.Register(new(Raft))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	rpc.HandleHTTP()
+
+	if err := http.ListenAndServe(":9000", nil); err != nil {
+		log.Fatal(err)
+	}
+
 	<-shutdownCh
+}
+
+// 分布式通信
+type Param struct {
+	Msg string
+}
+
+// 等待客户端消息
+func (rf *Raft) Communication(p Param, result *bool) error {
+	fmt.Println(p.Msg)
+	*result = true
+	return nil
 }
